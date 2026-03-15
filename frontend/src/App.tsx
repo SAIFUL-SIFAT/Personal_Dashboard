@@ -12,6 +12,7 @@ import { Settings } from './components/Settings';
 import { Coding } from './components/Coding';
 import { Auth } from './components/Auth';
 import { ReminderListener } from './components/ReminderListener';
+import { AIAssistant } from './components/AIAssistant';
 import { useStore } from './store/useStore';
 
 
@@ -62,6 +63,7 @@ export default function App() {
           </div>
         </div>
       </main>
+      <AIAssistant />
     </div>
   );
 }

@@ -41,6 +41,7 @@ interface StoreState {
 
     createTask: (task: Partial<Task>) => Promise<void>;
     updateTask: (id: string, data: Partial<Task>) => Promise<void>;
+    deleteTask: (id: string) => Promise<void>;
     createHabit: (habit: Partial<Habit>) => Promise<void>;
     createExpense: (expense: any) => Promise<void>;
     updateExpense: (id: string, data: any) => Promise<void>;
@@ -55,6 +56,7 @@ interface StoreState {
     markReminderNotified: (id: string) => Promise<void>;
     deleteReminder: (id: string) => Promise<void>;
     logHabit: (id: string) => Promise<void>;
+    aiChat: (prompt: string) => Promise<string>;
 
 
 
@@ -214,6 +216,17 @@ export const useStore = create<StoreState>((set, get) => ({
         } catch (err: any) { console.error(err); }
     },
 
+    deleteTask: async (id) => {
+        try {
+            const resp = await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
+            if (resp.ok) {
+                set((state) => ({
+                    tasks: state.tasks.filter(t => t.id !== id)
+                }));
+            }
+        } catch (err: any) { console.error(err); }
+    },
+
     createHabit: async (habit) => {
         try {
             const resp = await fetch(`${API_URL}/habits`, {
@@ -352,6 +365,21 @@ export const useStore = create<StoreState>((set, get) => ({
             await fetch(`${API_URL}/reminders/${id}`, { method: 'DELETE' });
             get().fetchReminders();
         } catch (err: any) { console.error(err); }
+    },
+
+    aiChat: async (prompt: string) => {
+        try {
+            const resp = await fetch(`${API_URL}/ai/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt }),
+            });
+            const data = await resp.json();
+            return data.response;
+        } catch (err: any) {
+            console.error(err);
+            return "Connection to Neural Core lost.";
+        }
     },
 
 }));
