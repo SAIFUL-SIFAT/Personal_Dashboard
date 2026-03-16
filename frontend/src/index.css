@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--bg-color, #0d0d0f);
+  --color-sidebar: var(--sidebar-color, #131316);
+  --color-card: var(--card-color, #1c1c21);
+  --color-card-foreground: var(--text-color, #fafafa);
+  --color-border: var(--border-color, #2c2c35);
+  --color-primary: var(--primary-color, #ff8c00);
+  --color-primary-foreground: #111114;
+  --color-muted: #2a2a30;
+  --color-muted-foreground: var(--muted-text, #8e8e9c);
+
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --primary-color: #ff8c00;
+  }
+
+  [data-theme='light'] {
+    color-scheme: light;
+    --bg-color: #f8f9fc;
+    --sidebar-color: #ffffff;
+    --card-color: #ffffff;
+    --text-color: #1a1a1f;
+    --border-color: #e2e8f0;
+    --muted-text: #64748b;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-card-foreground);
+    @apply font-sans antialiased min-h-screen selection:bg-primary/30;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.animate-in {
+  animation: animate-in 0.3s ease-out;
+}
+
+@keyframes animate-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

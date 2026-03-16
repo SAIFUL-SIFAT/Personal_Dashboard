@@ -18,6 +18,7 @@ import { useStore } from './store/useStore';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { user, theme, accentColor } = useStore();
 
   // Apply visual settings globally
@@ -32,7 +33,7 @@ export default function App() {
     <div className={`flex flex-col md:flex-row h-screen bg-[var(--color-background)] overflow-hidden font-sans text-[var(--color-card-foreground)] selection:bg-[var(--color-primary)]/30 transition-colors duration-300`}>
 
       <ReminderListener />
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
