@@ -4,7 +4,7 @@ import { Wallet, TrendingUp, TrendingDown, Plus, Minus, X, DollarSign, CreditCar
 import { useStore } from '../store/useStore';
 
 export function Finance() {
-    const { expenses, fetchExpenses, createExpense, updateExpense, deleteExpense } = useStore();
+    const { expenses, fetchExpenses, createExpense, updateExpense, deleteExpense, searchQuery } = useStore();
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [newTransaction, setNewTransaction] = useState({
@@ -21,8 +21,18 @@ export function Finance() {
         fetchExpenses();
     }, [fetchExpenses]);
 
+    // Filter expenses by search query
+    const q = searchQuery.toLowerCase();
+    const filteredExpenses = q
+        ? expenses.filter(e =>
+            (e.note || '').toLowerCase().includes(q) ||
+            (e.category || '').toLowerCase().includes(q) ||
+            (e.account || '').toLowerCase().includes(q)
+        )
+        : expenses;
+
     // PERSONAL CALCULATIONS
-    const personalExpenses = expenses.filter(e => !e.isFamily);
+    const personalExpenses = filteredExpenses.filter(e => !e.isFamily);
     const personalInflow = personalExpenses
         .filter(e => e.type === 'INCOME')
         .reduce((acc, curr) => acc + Number(curr.amount), 0);
@@ -32,7 +42,7 @@ export function Finance() {
     const personalBalance = personalInflow - personalOutflow;
 
     // FAMILY CALCULATIONS
-    const familyExpenses = expenses.filter(e => e.isFamily);
+    const familyExpenses = filteredExpenses.filter(e => e.isFamily);
     const familyInflow = familyExpenses
         .filter(e => e.type === 'INCOME')
         .reduce((acc, curr) => acc + Number(curr.amount), 0);
@@ -203,61 +213,44 @@ export function Finance() {
                     </div>
                 </div>
 
-                <div className="bg-[var(--color-card)] rounded-3xl border border-white/5 overflow-hidden shadow-sm">
-                    <div className="p-4 md:p-5 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
-                        <h3 className="text-[10px] md:text-xs font-black text-white tracking-widest uppercase italic">Journal of Personal Expenditures</h3>
+                <div className="bg-[var(--color-card)] rounded-3xl border border-white/5 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-white/5 flex justify-between items-center">
+                        <h3 className="text-[11px] font-black text-white tracking-widest uppercase">Personal Transactions</h3>
+                        <span className="text-[9px] font-black text-[var(--color-muted-foreground)] uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-full">{personalExpenses.length} records</span>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[500px] md:min-w-0">
-                            <thead className="bg-white/[0.02]">
-                                <tr className="text-[var(--color-muted-foreground)] text-[9px] uppercase tracking-[0.2em] font-black">
-                                    <th className="px-4 py-3">Identity</th>
-                                    <th className="px-4 py-3 hidden sm:table-cell">Details</th>
-                                    <th className="px-4 py-3">Timeline</th>
-                                    <th className="px-4 py-3 text-right">Valuation</th>
-                                    <th className="px-4 py-3 text-right">Ops</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {personalExpenses.length > 0 ? personalExpenses.map((exp) => (
-                                    <tr key={exp.id} className="group hover:bg-white/[0.02] transition-colors">
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${exp.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                    {exp.type === 'INCOME' ? <Plus size={14} /> : <Minus size={14} />}
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="font-black text-white text-sm md:text-md tracking-tight group-hover:text-[var(--color-primary)] transition-colors uppercase italic line-clamp-1">{exp.note || 'Internal Transaction'}</span>
-                                                    <span className="sm:hidden text-[7px] font-black text-white/40 uppercase tracking-widest">{exp.category} &bull; {exp.account}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 hidden sm:table-cell">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="px-2 py-0.5 bg-white/5 rounded-md text-[8px] font-black text-[var(--color-muted-foreground)] uppercase tracking-widest border border-white/5">{exp.category}</span>
-                                                <span className="px-2 py-0.5 bg-[var(--color-primary)]/10 rounded-md text-[8px] font-black text-[var(--color-primary)] uppercase tracking-widest border border-[var(--color-primary)]/10">{exp.account || 'Cash'}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-[9px] font-black text-[var(--color-muted-foreground)] uppercase tracking-widest opacity-50">
-                                            {new Date(exp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </td>
-                                        <td className={`px-4 py-3 text-right font-black text-md md:text-lg tracking-tighter ${exp.type === 'INCOME' ? 'text-emerald-500' : 'text-white'}`}>
-                                            {exp.type === 'INCOME' ? '+' : '-'}৳{Number(exp.amount).toLocaleString()}
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <div className="flex items-center justify-end gap-1.5 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => handleEdit(exp)} className="p-2 rounded-lg bg-white/5 text-white hover:bg-[var(--color-primary)] hover:text-black transition-all"><Edit2 size={12} /></button>
-                                                <button onClick={() => deleteExpense(exp.id)} className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={12} /></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan={5} className="px-8 py-12 text-center text-[var(--color-muted-foreground)] uppercase font-black text-[10px] tracking-widest opacity-20">Secure Record Empty</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                    <div className="divide-y divide-white/5">
+                        {personalExpenses.length > 0 ? personalExpenses.map((exp) => (
+                            <div key={exp.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.02] transition-colors group">
+                                {/* Icon */}
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${exp.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-400'}`}>
+                                    {exp.type === 'INCOME' ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
+                                </div>
+                                {/* Main info */}
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-black text-white text-sm leading-tight truncate group-hover:text-[var(--color-primary)] transition-colors">{exp.note || 'Transaction'}</p>
+                                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                        <span className="text-[8px] font-black text-[var(--color-muted-foreground)] uppercase tracking-widest">{new Date(exp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                        <span className="w-0.5 h-0.5 rounded-full bg-white/20" />
+                                        <span className="text-[8px] font-black text-[var(--color-muted-foreground)] uppercase tracking-widest">{exp.category}</span>
+                                        <span className="w-0.5 h-0.5 rounded-full bg-white/20" />
+                                        <span className={`text-[8px] font-black uppercase tracking-widest ${exp.account === 'bKash' ? 'text-pink-400' : exp.account === 'Bank' ? 'text-blue-400' : 'text-[var(--color-primary)]'}`}>{exp.account || 'Cash'}</span>
+                                    </div>
+                                </div>
+                                {/* Amount */}
+                                <div className="text-right shrink-0">
+                                    <p className={`font-black text-base tracking-tighter ${exp.type === 'INCOME' ? 'text-emerald-400' : 'text-white'}`}>
+                                        {exp.type === 'INCOME' ? '+' : '-'}৳{Number(exp.amount).toLocaleString()}
+                                    </p>
+                                </div>
+                                {/* Actions */}
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                    <button onClick={() => handleEdit(exp)} className="p-1.5 rounded-lg bg-white/5 text-white hover:bg-[var(--color-primary)] hover:text-black transition-all"><Edit2 size={11} /></button>
+                                    <button onClick={() => deleteExpense(exp.id)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={11} /></button>
+                                </div>
+                            </div>
+                        )) : (
+                            <div className="py-12 text-center text-[var(--color-muted-foreground)] font-black text-[10px] uppercase tracking-widest opacity-20">No personal transactions yet</div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -291,64 +284,44 @@ export function Finance() {
                     </div>
                 </div>
 
-                <div className="bg-[var(--color-card)] rounded-3xl border border-blue-500/20 overflow-hidden shadow-2xl shadow-blue-500/5">
-                    <div className="p-4 md:p-5 border-b border-white/5 flex justify-between items-center bg-blue-500/[0.02]">
-                        <h3 className="text-[10px] md:text-xs font-black text-white tracking-widest uppercase italic">Family Ledger Records</h3>
-                        <span className="hidden xs:inline text-[8px] font-black text-blue-500 uppercase tracking-[0.2em] bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">Authorized</span>
+                <div className="bg-[var(--color-card)] rounded-3xl border border-blue-500/10 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-blue-500/10 flex justify-between items-center">
+                        <h3 className="text-[11px] font-black text-blue-400 tracking-widest uppercase">Family Transactions</h3>
+                        <span className="text-[9px] font-black text-blue-400/60 uppercase tracking-widest bg-blue-500/10 px-2.5 py-1 rounded-full">{familyExpenses.length} records</span>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[500px] md:min-w-0">
-                            <thead className="bg-blue-500/[0.02]">
-                                <tr className="text-[var(--color-muted-foreground)] text-[9px] uppercase tracking-[0.2em] font-black">
-                                    <th className="px-4 py-3">Reference</th>
-                                    <th className="px-4 py-3 hidden sm:table-cell">Details</th>
-                                    <th className="px-4 py-3">Timeline</th>
-                                    <th className="px-4 py-3 text-right">Valuation</th>
-                                    <th className="px-4 py-3 text-right">Ops</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {familyExpenses.length > 0 ? familyExpenses.map((exp) => (
-                                    <tr key={exp.id} className="group hover:bg-blue-500/[0.01] transition-colors">
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
-                                                    <CreditCard size={14} />
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="font-black text-white text-sm md:text-md tracking-tight group-hover:text-blue-400 transition-colors uppercase italic line-clamp-1">{exp.note || 'Consumables'}</span>
-                                                    <span className="sm:hidden text-[7px] font-black text-blue-400/40 uppercase tracking-widest">{exp.category} &bull; {exp.account}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 hidden sm:table-cell">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="px-2 py-0.5 bg-white/5 rounded-md text-[8px] font-black text-blue-400 uppercase tracking-widest border border-blue-500/10">{exp.category}</span>
-                                                <span className="px-2 py-0.5 bg-blue-500/10 rounded-md text-[8px] font-black text-blue-400 uppercase tracking-widest border border-blue-500/20">{exp.account || 'Cash'}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className="text-[9px] font-black text-[var(--color-muted-foreground)] uppercase tracking-widest opacity-50">
-                                                {new Date(exp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                            </span>
-                                        </td>
-                                        <td className={`px-4 py-3 text-right font-black text-md md:text-lg tracking-tighter ${exp.type === 'INCOME' ? 'text-blue-400' : 'text-white'}`}>
-                                            {exp.type === 'INCOME' ? '+' : '-'}৳{Number(exp.amount).toLocaleString()}
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <div className="flex items-center justify-end gap-1.5 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => handleEdit(exp)} className="p-2 rounded-lg bg-white/5 text-white hover:bg-blue-500 transition-all"><Edit2 size={12} /></button>
-                                                <button onClick={() => deleteExpense(exp.id)} className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={12} /></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan={5} className="px-8 py-12 text-center text-[var(--color-muted-foreground)] uppercase font-black text-[10px] tracking-widest opacity-20">Shared Ledger Dormant</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                    <div className="divide-y divide-blue-500/5">
+                        {familyExpenses.length > 0 ? familyExpenses.map((exp) => (
+                            <div key={exp.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-blue-500/[0.03] transition-colors group">
+                                {/* Icon */}
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${exp.type === 'INCOME' ? 'bg-blue-500/10 text-blue-400' : 'bg-red-500/10 text-red-400'}`}>
+                                    {exp.type === 'INCOME' ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
+                                </div>
+                                {/* Main info */}
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-black text-white text-sm leading-tight truncate group-hover:text-blue-400 transition-colors">{exp.note || 'Family Transaction'}</p>
+                                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                        <span className="text-[8px] font-black text-[var(--color-muted-foreground)] uppercase tracking-widest">{new Date(exp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                        <span className="w-0.5 h-0.5 rounded-full bg-white/20" />
+                                        <span className="text-[8px] font-black text-[var(--color-muted-foreground)] uppercase tracking-widest">{exp.category}</span>
+                                        <span className="w-0.5 h-0.5 rounded-full bg-white/20" />
+                                        <span className={`text-[8px] font-black uppercase tracking-widest ${exp.account === 'bKash' ? 'text-pink-400' : exp.account === 'Bank' ? 'text-blue-400' : 'text-[var(--color-primary)]'}`}>{exp.account || 'Cash'}</span>
+                                    </div>
+                                </div>
+                                {/* Amount */}
+                                <div className="text-right shrink-0">
+                                    <p className={`font-black text-base tracking-tighter ${exp.type === 'INCOME' ? 'text-blue-400' : 'text-white'}`}>
+                                        {exp.type === 'INCOME' ? '+' : '-'}৳{Number(exp.amount).toLocaleString()}
+                                    </p>
+                                </div>
+                                {/* Actions */}
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                    <button onClick={() => handleEdit(exp)} className="p-1.5 rounded-lg bg-white/5 text-white hover:bg-blue-500 hover:text-white transition-all"><Edit2 size={11} /></button>
+                                    <button onClick={() => deleteExpense(exp.id)} className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={11} /></button>
+                                </div>
+                            </div>
+                        )) : (
+                            <div className="py-12 text-center text-[var(--color-muted-foreground)] font-black text-[10px] uppercase tracking-widest opacity-20">No family transactions yet</div>
+                        )}
                     </div>
                 </div>
             </div>

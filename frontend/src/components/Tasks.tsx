@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore';
 import { showNotification } from '../utils/notifications';
 
 export function Tasks() {
-    const { tasks, fetchTasks, createTask, updateTask, searchQuery } = useStore();
+    const { tasks, fetchTasks, createTask, updateTask, deleteTask, searchQuery } = useStore();
     const [showModal, setShowModal] = useState(false);
     const [filter, setFilter] = useState('ALL');
     const [newTask, setNewTask] = useState({
@@ -44,8 +44,13 @@ export function Tasks() {
     };
 
     const filteredTasks = tasks.filter(task => {
-        if (filter === 'ALL') return true;
-        return task.status === filter;
+        const matchesStatus = filter === 'ALL' || task.status === filter;
+        const q = searchQuery.toLowerCase();
+        const matchesQuery = !q ||
+            (task.title || '').toLowerCase().includes(q) ||
+            (task.description || '').toLowerCase().includes(q) ||
+            (task.category || '').toLowerCase().includes(q);
+        return matchesStatus && matchesQuery;
     });
 
     return (
@@ -100,7 +105,10 @@ export function Tasks() {
                             </div>
                         </div>
                         <div className="sm:opacity-0 group-hover:opacity-100 transition-opacity w-full sm:w-auto">
-                            <button className="w-full sm:w-auto p-3 rounded-xl bg-white/5 text-red-500 hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px]">
+                            <button
+                                onClick={() => deleteTask(task.id)}
+                                className="w-full sm:w-auto p-3 rounded-xl bg-white/5 text-red-500 hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2 font-black uppercase tracking-widest text-[10px]"
+                            >
                                 <X size={16} /> <span className="sm:hidden">Cancel Objective</span>
                             </button>
                         </div>
